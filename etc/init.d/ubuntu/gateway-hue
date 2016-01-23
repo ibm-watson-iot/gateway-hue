@@ -18,6 +18,7 @@ dir="/root/gateway-hue"
 cmd="python2.7 -c app.cfg -i $hue_bridge_ip -u $hue_bridge_username"
 user=""
 
+
 name=`basename $0`
 pid_file="/var/run/$name.pid"
 stdout_log="/var/log/$name.log"
