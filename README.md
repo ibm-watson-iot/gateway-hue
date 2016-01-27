@@ -28,7 +28,7 @@ Likewise, all devices connected to the bridge will be auto-registered by the gat
 
 ### Events
 
-State updates are published to IoT Watson every 10 seconds.  For every light connected to your Hue bridge the 
+State updates are published to Watson IoT every 10 seconds.  For every light connected to your Hue bridge the 
 gateway will relay a state event containing all the state data available from your Hue bridge:
 ```json
 {
