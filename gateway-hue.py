@@ -2,7 +2,7 @@ import sys
 import json
 import time
 import ibmiotf.application
-from ibmiotf import IoTFCReSTException
+from ibmiotf import APIException
 
 import requests
 import signal
@@ -16,13 +16,12 @@ class Server():
 
 	def __init__(self, args):
 		# Setup logging - Generate a default rotating file log handler and stream handler
-		logFileName = 'gateway-hue.log'
-		fhFormatter = logging.Formatter('%(asctime)-25s %(name)-30s ' + ' %(levelname)-7s %(message)s')
-		rfh = RotatingFileHandler(logFileName, mode='a', maxBytes=26214400 , backupCount=2, encoding=None, delay=True)
-		rfh.setFormatter(fhFormatter)
+		fhFormatter = logging.Formatter('%(asctime)-25s %(levelname)-7s %(message)s')
+		sh = logging.StreamHandler()
+		sh.setFormatter(fhFormatter)
 		
 		self.logger = logging.getLogger("server")
-		self.logger.addHandler(rfh)
+		self.logger.addHandler(sh)
 		self.logger.setLevel(logging.DEBUG)
 		
 		self.options = ibmiotf.application.ParseConfigFile(args.config)
@@ -66,8 +65,9 @@ class Server():
 					try:
 						deviceType = self.client.api.getDeviceType(typeId)
 						self.knownDeviceTypes[typeId] = deviceType
-					except IoTFCReSTException as e:
+					except APIException as e:
 						self.logger.debug("ERROR [" + str(e.httpCode) + "] " + e.message)
+						self.logger.info("Registering new device type: %s" % (typeId))
 						
 						deviceTypeInfo = { "manufacturer": typeManufacturer, "model": typeModel, "description": typeDescription, }
 						deviceType = self.client.api.addDeviceType(deviceType=typeId, description=typeDescription, deviceInfo=deviceTypeInfo)
@@ -78,8 +78,9 @@ class Server():
 					try:
 						device = self.client.api.getDevice(typeId, deviceId)
 						self.knownDevices[deviceId] = device
-					except IoTFCReSTException as e:
+					except APIException as e:
 						self.logger.debug("ERROR [" + str(e.httpCode) + "] " + e.message)
+						self.logger.info("Registering new device: %s:%s" % (typeId, deviceId))
 						
 						deviceMetadata = {"customField1": "customValue1", "customField2": "customValue2"}
 						deviceInfo = {"manufacturer": deviceManufacturer, "model": deviceModel, "fwVersion" : deviceSwVersion}
