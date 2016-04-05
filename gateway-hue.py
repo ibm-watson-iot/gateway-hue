@@ -47,7 +47,7 @@ class Server():
 		else:
 			for id, light in lights.items():
 				# Properties of the IoTF Device Type
-				typeId = light['modelid']
+				typeId = light['modelid'].replace(" ", "_")
 				typeDescription = light['type']
 				typeManufacturer = light['manufacturername']
 				typeModel = light['modelid']
@@ -70,7 +70,7 @@ class Server():
 						self.logger.info("Registering new device type: %s" % (typeId))
 						
 						deviceTypeInfo = { "manufacturer": typeManufacturer, "model": typeModel, "description": typeDescription, }
-						deviceType = self.client.api.addDeviceType(deviceType=typeId, description=typeDescription, deviceInfo=deviceTypeInfo)
+						deviceType = self.client.api.addDeviceType(typeId=typeId, description=typeDescription, deviceInfo=deviceTypeInfo)
 						self.knownDeviceTypes[typeId] = deviceType
 					
 				# Register the device if we need to
