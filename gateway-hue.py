@@ -27,7 +27,7 @@ class Server():
 		self.options = ibmiotf.application.ParseConfigFile(args.config)
 				
 		# Init IOTF client
-		self.client = ibmiotf.application.Client(self.options, logHandlers=[rfh])
+		self.client = ibmiotf.application.Client(self.options, logHandlers=[sh])
 		
 		# Internal State
 		self.knownDeviceTypes = {}
@@ -96,7 +96,7 @@ class Server():
 		
 		while True:
 			self._poll()
-			time.sleep(10)
+			time.sleep(60)
 		
 		
 	def stop(self):

@@ -1,47 +1,63 @@
 # Setup on Raspbian
 
-Install Raspbian using the [minimal Raspbian unattended netinstaller for Raspberry Pi Model 1B, 1B+ and 2B](https://github.com/debian-pi/raspbian-ua-netinst)
+## Install the official supported operating system
+Available from [Rasbian Jessie Lite](https://www.raspberrypi.org/downloads/raspbian/)
 
-Install [Python](https://www.python.org/downloads/) & the [``ibmiotf``](https://pypi.python.org/pypi/ibmiotf/) module.
+## Connect to your wireless network
+
+Edit `/etc/wpa_supplicant/wpa_supplicant.conf` to add the SSID and pasword for your wireless network:
 
 ```
-root@pi:~# apt-get install sudo zip build-essential checkinstall
-root@pi:~# apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
-root@pi:~# cd /usr/src
-root@pi:/usr/src# wget https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz
-root@pi:/usr/src# tar xzf Python-2.7.10.tgz
-root@pi:/usr/src# cd Python-2.7.10
-root@pi:/usr/src/Python-2.7.10# ./configure
-root@pi:/usr/src/Python-2.7.10# make altinstall
-root@pi:/usr/src/Python-2.7.10# wget https://pypi.python.org/packages/source/d/distribute/distribute-0.7.3.zip#md5=c6c59594a7b180af57af8a0cc0cf5b4a
-root@pi:/usr/src/Python-2.7.10# unzip distribute-0.7.3.zip
-root@pi:/usr/src/Python-2.7.10# cd distribute-0.7.3
-root@pi:/usr/src/Python-2.7.10/distribute-0.7.3# python2.7 setup.py install
-root@pi:/usr/src/Python-2.7.10/distribute-0.7.3# easy_install-2.7 pip
-root@pi:/usr/src/Python-2.7.10/distribute-0.7.3# pip2.7 install ibmiotf
+country=GB
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid="SSID"
+    psk="password"
+}
+```
+Run `ifconfig wlan0` to verify that the settings were applied (you should see an IP address assigned now).  If not run `ifdown wlan0` and `ifup wlan0` to restart the wireless interface.
+
+## Install Pre-requisites 
+The default Python packaged with Ubuntu will not support TLS 1.2.  Perform an alt-install of the latest Python (at time of writing 2.7.12), an updated package manager (pip) and the ibmiotf Python client library.  See: `install-raspbian.sh`
+
+
+## Install the Gateway Application 
+Download the client application code and supervisord configuration file.  See: `install-raspbian.sh`
+
+```
+mkdir -p /opt/ibm/gateway-hue
+cd /opt/ibm/gateway-hue
+wget https://raw.githubusercontent.com/ibm-iotf/gateway-hue/master/gateway-hue.py
+wget https://raw.githubusercontent.com/ibm-iotf/gateway-hue/master/supervisord/gateway-hue.conf -O /etc/supervisor/conf.d/gateway-hue.conf
 ```
 
-## Install the gateway application client code
+## Setup a new user on your Hue Hub
+See the Hue documentation for more information: http://www.developers.meethue.com/documentation/getting-started
+
+## Update the supervisord configuration
+You will need to set the IP address and username of the hub to connect to in gateway-hue.conf:
 ```
-root@pi:~# wget https://raw.githubusercontent.com/ibm-iotf/gateway-hue/master/gateway-hue.py
+[program:gateway-hue]
+directory = /opt/ibm/gateway-hue
+command = python2.7 gateway-hue.py -c app.cfg  -i IP_ADDRESS -u USERNAME
+redirect_stderr = true
+stdout_logfile = /var/log/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes = 10MB
+stdout_logfile_backups=5
+autorestart = true
 ```
 
 ## Create an application configuration file
-After registering an API key create a configuration file with the correct details for the application.
+After registering a Watson IoT Platform API key, create a configuration file with the correct details for the application `/opt/ibm/gateway-hue/app.cfg`.
 
 ```
-[device]
+[application]
 org=$orgId
-id=myGateway
-type=standalone
-auth-method=apikey
-auth-key=a-hldtxx-b6v5f3ufok
+auth-key=$key
 auth-token=$token
 ```
 
-## Launch the gateway application
-```
-root@pi:~# python gateway-hue.py -c app.cfg  -i <hue_bridge_ip_address> -u <hue_bridge_username>
-(Press Ctrl+C to disconnect)
-
-```
+## Controlling the gateway application
+Supervisor can be used to control the application using: `supervisorctl start|stop|restart|status gateway-hue`

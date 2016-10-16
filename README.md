@@ -7,7 +7,7 @@ Connect your Phillips Hue Bridge to Watson IoT.
 
 ## Lights
 
-### Auto Registration
+### Automatic Device Registration
 
 Any new type of light connected to your Hue bridge will be auto-registered as a new device type in Watson IoT:
 
@@ -28,8 +28,9 @@ Likewise, all devices connected to the bridge will be auto-registered by the gat
 
 ### Events
 
-State updates are published to Watson IoT every 10 seconds.  For every light connected to your Hue bridge the 
+State updates are published to Watson IoT every 60 seconds (althought this can easily be changed).  For every light connected to your Hue bridge the 
 gateway will relay a state event containing all the state data available from your Hue bridge:
+
 ```json
 {
   "on": true, 
